@@ -1,0 +1,144 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+@{
+    ViewData["Title"] = "Home";
+    var isAdmin = User.IsInRole("Admin");
+}
+
+<div class="hero-section">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <div class="hero-content p-4 p-md-5 rounded-4 shadow-sm">
+                    <h1 class="display-4 fw-bold mb-4 text-gradient">Content Moderation Portal</h1>
+                    <p class="lead fs-4 mb-5">Leverage AI-powered analysis to ensure your content meets safety standards</p>
+
+                    @if (!SignInManager.IsSignedIn(User))
+                    {
+                        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                            <a class="btn btn-primary btn-lg px-4 gap-3" asp-area="Identity" asp-page="/Account/Login">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </a>
+                            <a class="btn btn-outline-primary btn-lg px-4" asp-area="Identity" asp-page="/Account/Register">
+                                <i class="fas fa-user-plus me-2"></i>Register
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                            <a class="btn btn-success btn-lg px-4 gap-3" asp-controller="Home" asp-action="Submit">
+                                <i class="fas fa-cloud-upload-alt me-2"></i>Submit Content
+                            </a>
+                            <a class="btn btn-info btn-lg px-4" asp-controller="Home" asp-action="MySubmissions">
+                                <i class="fas fa-history me-2"></i>My Submissions
+                            </a>
+
+                            @if (isAdmin)
+                            {
+                                <a class="btn btn-danger btn-lg px-4" asp-controller="Admin" asp-action="Index">
+                                    <i class="fas fa-shield-alt me-2"></i>Admin Dashboard
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4361ee, #3a0ca3);
+        --text-gradient: linear-gradient(135deg, #4361ee, #4cc9f0);
+    }
+
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .hero-section {
+        background: var(--primary-gradient);
+        background-size: 200% 200%;
+        animation: gradient 15s ease infinite;
+        color: white;
+        padding: 4rem 0;
+        margin-top: -2rem;
+        border-radius: 0 0 20px 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .hero-content {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        color: #212529;
+    }
+
+    .text-gradient {
+        background: var(--text-gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        display: inline-block;
+    }
+
+    .btn {
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid #4361ee;
+        color: #4361ee;
+    }
+
+        .btn-outline-primary:hover {
+            background: #4361ee;
+            color: white;
+        }
+
+    .btn-success {
+        background: linear-gradient(135deg, #4bb543, #2e7d32);
+        border: none;
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #4cc9f0, #4895ef);
+        border: none;
+        color: white;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #f72585, #b5179e);
+        border: none;
+    }
+
+    @@keyframes gradient {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+</style>

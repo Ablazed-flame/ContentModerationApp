@@ -1,0 +1,199 @@
+﻿@model ContentModerationApp.Models.ContentSubmission
+@{
+    ViewData["Title"] = "Moderation Result";
+    var finalFlaggedStatus = Model.AdminOverrideFlag.HasValue ? Model.AdminOverrideFlag.Value : Model.IsFlagged;
+    var statusColor = finalFlaggedStatus ? "danger" : "success";
+    var statusIcon = finalFlaggedStatus ? "fa-exclamation-triangle" : "fa-check-circle";
+}
+
+<div class="container py-5">
+    <div class="card shadow-lg rounded-4">
+        <div class="card-header bg-gradient-@statusColor text-white py-4 rounded-top-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h4 mb-0">
+                    <i class="fas @statusIcon me-2"></i>Moderation Result
+                </h2>
+                <div class="badge bg-white text-@statusColor fs-6">
+                    @(finalFlaggedStatus ? "FLAGGED CONTENT" : "CLEAN CONTENT")
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-card mb-4">
+                        <h5 class="detail-title">
+                            <i class="fas fa-calendar-alt me-2"></i>Submission Details
+                        </h5>
+                        <div class="detail-content">
+                            <div class="mb-3">
+                                <span class="detail-label">Submitted At:</span>
+                                <span class="detail-value">@Model.SubmittedAt.ToLocalTime().ToString("f")</span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="detail-label">Final Decision:</span>
+                                <span class="detail-value">
+                                    <span class="badge bg-@statusColor rounded-pill">
+                                        <i class="fas @statusIcon me-1"></i>
+                                        @(finalFlaggedStatus ? "Flagged" : "Approved")
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.TextContent))
+                    {
+                        <div class="detail-card mb-4">
+                            <h5 class="detail-title">
+                                <i class="fas fa-align-left me-2"></i>Text Content
+                            </h5>
+                            <div class="detail-content">
+                                <div class="content-box p-3 rounded-3">
+                                    @Model.TextContent
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="col-md-6">
+                    @if (!string.IsNullOrEmpty(Model.ImagePath))
+                    {
+                        <div class="detail-card mb-4">
+                            <h5 class="detail-title">
+                                <i class="fas fa-image me-2"></i>Submitted Image
+                            </h5>
+                            <div class="detail-content text-center">
+                                <a href="@Model.ImagePath" data-lightbox="moderation-image" data-title="Submitted Image">
+                                    <img src="@Model.ImagePath" class="img-fluid rounded-3 shadow" style="max-height: 300px;" alt="Submitted Image" />
+                                </a>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="detail-card mb-4">
+                        <h5 class="detail-title">
+                            <i class="fas fa-clipboard-check me-2"></i>Moderation Summary
+                        </h5>
+                        <div class="detail-content">
+                            <div class="summary-box p-3 rounded-3">
+                                @Model.ModerationSummary
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.AdminOverrideNote))
+            {
+                <div class="alert alert-warning shadow-sm rounded-3">
+                    <h5 class="alert-heading d-flex align-items-center">
+                        <i class="fas fa-user-shield me-2"></i>Admin Review Note
+                    </h5>
+                    <hr>
+                    <div class="admin-note">
+                        @Model.AdminOverrideNote
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="card-footer bg-light py-3 rounded-bottom-4">
+            <div class="d-flex justify-content-between">
+                <a asp-action="MySubmissions" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Submissions
+                </a>
+                <div>
+                    <a asp-action="Submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Submit Another
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" />
+    <style>
+        .bg-gradient-danger {
+            background: linear-gradient(135deg, #f72585, #b5179e);
+        }
+
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #4bb543, #2e7d32);
+        }
+
+        .card {
+            border: none;
+            overflow: hidden;
+        }
+
+        .detail-card {
+            background-color: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1.25rem;
+            height: 100%;
+        }
+
+        .detail-title {
+            color: #4361ee;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .detail-value {
+            color: #212529;
+        }
+
+        .content-box, .summary-box {
+            background-color: #f8f9fa;
+            border-left: 3px solid #4361ee;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .summary-box {
+            border-left-color: #4cc9f0;
+        }
+
+        .admin-note {
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .badge.rounded-pill {
+            padding: 0.5em 1em;
+        }
+
+        .img-fluid {
+            transition: transform 0.3s;
+            cursor: zoom-in;
+        }
+
+            .img-fluid:hover {
+                transform: scale(1.02);
+            }
+
+        hr {
+            opacity: 0.2;
+            margin: 1rem 0;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+}

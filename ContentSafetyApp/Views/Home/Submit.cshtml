@@ -1,0 +1,193 @@
+﻿@model ContentModerationApp.ViewModels.ContentSubmissionViewModel
+@{
+    ViewData["Title"] = "Submit Content";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg rounded-4 overflow-hidden">
+                <div class="card-header bg-gradient-primary text-white py-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-cloud-upload-alt fa-2x me-3"></i>
+                        <div>
+                            <h1 class="h3 mb-0">Submit Content for Moderation</h1>
+                            <p class="mb-0 opacity-75">Our AI will analyze your content for safety and compliance</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="Submit" method="post" enctype="multipart/form-data" id="submissionForm">
+                        <div class="mb-4">
+                            <label asp-for="TextContent" class="form-label fw-bold mb-2">
+                                <i class="fas fa-align-left me-2"></i>Text Content
+                            </label>
+                            <textarea asp-for="TextContent" class="form-control form-control-lg"
+                                      rows="6" placeholder="Enter the text you want to analyze..."
+                                      style="min-height: 150px;"></textarea>
+                            <span asp-validation-for="TextContent" class="text-danger small mt-1 d-block"></span>
+                            <div class="form-text">Maximum 5000 characters</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="ImageFile" class="form-label fw-bold mb-2">
+                                <i class="fas fa-image me-2"></i>Image Upload (Optional)
+                            </label>
+                            <div class="file-upload-wrapper">
+                                <input asp-for="ImageFile" type="file" class="form-control form-control-lg"
+                                       accept="image/*" id="imageUpload" />
+                                <div class="file-upload-preview mt-3 text-center" id="imagePreview" style="display:none;">
+                                    <img id="previewImage" class="img-thumbnail rounded-3" style="max-height: 200px;" />
+                                    <button type="button" class="btn btn-sm btn-danger mt-2" id="removeImage">
+                                        <i class="fas fa-times me-1"></i>Remove Image
+                                    </button>
+                                </div>
+                            </div>
+                            <span asp-validation-for="ImageFile" class="text-danger small mt-1 d-block"></span>
+                            <div class="form-text">JPG, PNG or GIF (Max 5MB)</div>
+                        </div>
+
+                        <div class="d-grid gap-3 d-md-flex justify-content-md-end mt-4">
+                            <button type="reset" class="btn btn-outline-secondary btn-lg px-4">
+                                <i class="fas fa-undo me-2"></i>Reset
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-lg px-4" id="submitBtn">
+                                <i class="fas fa-paper-plane me-2"></i>Submit for Analysis
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <div class="d-inline-flex align-items-center text-muted">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    <small>All submissions are processed securely and confidentially</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #4361ee, #3a0ca3);
+        }
+
+        .card {
+            border: none;
+        }
+
+        .form-control-lg {
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+            .form-control-lg:focus {
+                border-color: #4361ee;
+                box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+            }
+
+        .file-upload-wrapper {
+            position: relative;
+        }
+
+            .file-upload-wrapper input[type="file"] {
+                padding: 0.5rem;
+            }
+
+            .file-upload-wrapper::before {
+                content: "Choose file";
+                position: absolute;
+                top: 0;
+                right: 0;
+                display: inline-block;
+                background: #e9ecef;
+                border: 1px solid #dee2e6;
+                border-radius: 0 0.5rem 0.5rem 0;
+                padding: 0.5rem 1rem;
+                outline: none;
+                white-space: nowrap;
+                cursor: pointer;
+                font-weight: 500;
+                font-size: 0.875rem;
+                color: #495057;
+            }
+
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+        }
+
+        #submitBtn {
+            position: relative;
+            overflow: hidden;
+        }
+
+            #submitBtn:after {
+                content: "";
+                position: absolute;
+                top: -50%;
+                left: -60%;
+                width: 20px;
+                height: 200%;
+                opacity: 0;
+                transform: rotate(30deg);
+                background: rgba(255, 255, 255, 0.2);
+                background: linear-gradient( to right, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.2) 77%, rgba(255, 255, 255, 0.5) 92%, rgba(255, 255, 255, 0.0) 100% );
+            }
+
+            #submitBtn:hover:after {
+                opacity: 1;
+                left: 130%;
+                transition-property: left, top, opacity;
+                transition-duration: 0.7s, 0.7s, 0.15s;
+                transition-timing-function: ease;
+            }
+    </style>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            // Image preview functionality
+            $('#imageUpload').change(function(e) {
+                if (this.files && this.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        $('#previewImage').attr('src', e.target.result);
+                        $('#imagePreview').show();
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+
+            // Remove image functionality
+            $('#removeImage').click(function() {
+                $('#imageUpload').val('');
+                $('#imagePreview').hide();
+            });
+
+            // Character counter for textarea
+            $('#TextContent').on('input', function() {
+                var maxLength = 5000;
+                var currentLength = $(this).val().length;
+                if (currentLength >= maxLength) {
+                    $(this).val($(this).val().substring(0, maxLength));
+                }
+            });
+
+            // Form submission loading indicator
+            $('#submissionForm').submit(function() {
+                $('#submitBtn').prop('disabled', true);
+                $('#submitBtn').html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...');
+            });
+        });
+    </script>
+}

@@ -1,5 +1,6 @@
 ﻿using ContentModerationApp.Data;
 using ContentModerationApp.Models;
+using ContentModerationApp.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,24 +15,49 @@ public class AdminController : Controller
         _context = context;
     }
 
-    // View all submissions
+ 
     public async Task<IActionResult> Index()
     {
-        var submissions = await _context.ContentSubmissions.ToListAsync();
-        return View(submissions);
+
+        var viewModels = await _context.ContentSubmissions
+                .Include(s => s.User) // We need this to get the User.Email
+                .OrderByDescending(s => s.SubmittedAt)
+                .Select(s => new AdminSubmissionSummaryViewModel // Project on the DB server
+                {
+                    Id = s.Id,
+                    IsFlagged = s.IsFlagged,
+                    AdminOverrideFlag = s.AdminOverrideFlag,
+
+                    // Use correct property names: .Content and .ImageUrl
+                    TextContent = s.Items.OfType<TextContentItem>().FirstOrDefault().Text,
+                    ImagePath = s.Items.OfType<ImageContentItem>().FirstOrDefault().ImagePath
+                })
+                .ToListAsync();
+        return View(viewModels);
     }
 
     // GET: Override flag page
     public async Task<IActionResult> OverrideFlag(int id)
     {
-        var submission = await _context.ContentSubmissions.FindAsync(id);
-        if (submission == null) return NotFound();
-        return View(submission);
+        var submissionFromDb = await _context.ContentSubmissions
+                .Include(s => s.User) // Load the user
+                .Include(s => s.Items) // Load ALL items
+                    .ThenInclude(item => item.ModerationResult) // Load ALL their results
+                .SingleOrDefaultAsync(s => s.Id == id); // Get the single item
+
+        if (submissionFromDb == null)
+        {
+            return NotFound();
+        }
+
+        // Pass the FULL domain model to the view
+        return View(submissionFromDb);
     }
 
     // POST: Save override changes
     [HttpPost]
-    public async Task<IActionResult> OverrideFlag(ContentSubmission model)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> OverrideFlag(AdminOverrideInputViewModel model)
     {
         var submission = await _context.ContentSubmissions.FindAsync(model.Id);
         if (submission == null) return NotFound();
@@ -59,7 +85,11 @@ public class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var submission = await _context.ContentSubmissions.FindAsync(id);
+        var submission = await _context.ContentSubmissions
+                .Include(s => s.Items)
+                    .ThenInclude(item => item.ModerationResult)
+                .SingleOrDefaultAsync(s => s.Id == id);
+
         if (submission == null)
         {
             return NotFound();

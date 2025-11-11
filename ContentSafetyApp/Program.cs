@@ -1,9 +1,13 @@
+using Azure;
+using Azure.AI.ContentSafety;
 using ContentModerationApp.Data;
 using ContentModerationApp.Helpers;
+using ContentModerationApp.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Net.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +20,20 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddSingleton<IEmailSender, EmailSender>();
 
+builder.Services.AddSingleton<AzureContentSafetyService>();
+builder.Services.AddSingleton(new ContentSafetyClient(
+    new Uri(builder.Configuration["AzureContentSafety:Endpoint"]),
+    new AzureKeyCredential(builder.Configuration["AzureContentSafety:ApiKey"])
+));
+builder.Services.AddHttpClient<CohereApiService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["CohereApi:Endpoint"]);
+    client.DefaultRequestHeaders.Add("Authorization", $"Bearer {builder.Configuration["CohereApi:ApiKey"]}");
+});
+builder.Services.AddScoped<IContentModerationService, ContentModerationService>();
+builder.Services.AddScoped<IContentSubmissionService, ContentSubmissionService>();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;

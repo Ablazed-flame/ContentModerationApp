@@ -4,6 +4,7 @@ using ContentModerationApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ContentModerationApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250818122530_ainit")]
+    partial class ainit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,33 +24,6 @@ namespace ContentModerationApp.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("ContentModerationApp.Models.ContentItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ContentSubmissionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(21)
-                        .HasColumnType("nvarchar(21)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContentSubmissionId");
-
-                    b.ToTable("ContentItems");
-
-                    b.HasDiscriminator().HasValue("ContentItem");
-
-                    b.UseTphMappingStrategy();
-                });
 
             modelBuilder.Entity("ContentModerationApp.Models.ContentSubmission", b =>
                 {
@@ -66,36 +42,11 @@ namespace ContentModerationApp.Migrations
                     b.Property<string>("AdminOverrideNote")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsFlagged")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("SubmittedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ContentSubmissions");
-                });
-
-            modelBuilder.Entity("ContentModerationApp.Models.ModerationResult", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ContentItemId")
-                        .HasColumnType("int");
-
                     b.Property<string>("FlagReasons")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImagePath")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsFlagged")
@@ -105,12 +56,21 @@ namespace ContentModerationApp.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TextContent")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ContentItemId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
-                    b.ToTable("ModerationResults");
+                    b.ToTable("ContentSubmissions");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -311,59 +271,13 @@ namespace ContentModerationApp.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ContentModerationApp.Models.ImageContentItem", b =>
-                {
-                    b.HasBaseType("ContentModerationApp.Models.ContentItem");
-
-                    b.Property<string>("ImagePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasDiscriminator().HasValue("ImageContentItem");
-                });
-
-            modelBuilder.Entity("ContentModerationApp.Models.TextContentItem", b =>
-                {
-                    b.HasBaseType("ContentModerationApp.Models.ContentItem");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasDiscriminator().HasValue("TextContentItem");
-                });
-
-            modelBuilder.Entity("ContentModerationApp.Models.ContentItem", b =>
-                {
-                    b.HasOne("ContentModerationApp.Models.ContentSubmission", "ContentSubmission")
-                        .WithMany("Items")
-                        .HasForeignKey("ContentSubmissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ContentSubmission");
-                });
-
             modelBuilder.Entity("ContentModerationApp.Models.ContentSubmission", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ContentModerationApp.Models.ModerationResult", b =>
-                {
-                    b.HasOne("ContentModerationApp.Models.ContentItem", "ContentItem")
-                        .WithOne("ModerationResult")
-                        .HasForeignKey("ContentModerationApp.Models.ModerationResult", "ContentItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ContentItem");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -415,17 +329,6 @@ namespace ContentModerationApp.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("ContentModerationApp.Models.ContentItem", b =>
-                {
-                    b.Navigation("ModerationResult")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ContentModerationApp.Models.ContentSubmission", b =>
-                {
-                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

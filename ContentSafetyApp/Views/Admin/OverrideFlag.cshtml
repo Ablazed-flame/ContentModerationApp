@@ -10,27 +10,28 @@
             <input type="hidden" asp-for="Id" />
 
             <div class="row mb-4">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Text Content</label>
-                        <div class="p-3 bg-light rounded">@Model.TextContent</div>
-                    </div>
-                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold">Submitted Content</label>
 
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Image</label>
-                        @if (!string.IsNullOrEmpty(Model.ImagePath))
+                    @foreach (var item in Model.Items)
+                    {
+                        @switch (item)
                         {
-                            <div class="border p-2 bg-light rounded text-center">
-                                <img src="@Model.ImagePath" class="img-fluid" style="max-height: 200px;" />
-                            </div>
+                            case TextContentItem textItem:
+                                <div class="p-3 bg-light rounded border mb-2">
+                                    <h6 class="text-muted">Text Content:</h6>
+                                    <blockquote class="mb-0">@textItem.Text</blockquote>
+                                </div>
+                                break;
+
+                            case ImageContentItem imageItem:
+                                <div class="p-3 bg-light rounded border mb-2 text-center">
+                                    <h6 class="text-muted">Image Content:</h6>
+                                    <img src="@imageItem.ImagePath" class="img-fluid rounded" style="max-height: 300px;" />
+                                </div>
+                                break;
                         }
-                        else
-                        {
-                            <div class="text-muted">No image available</div>
-                        }
-                    </div>
+                    }
                 </div>
             </div>
 

@@ -5,7 +5,7 @@
         public int Id { get; set; }
         
         public int ContentItemId { get; set; }
-        public ContentItem ContentItem { get; set; }
+        public virtual ContentItem ContentItem { get; set; }
 
         public bool IsFlagged { get; set; }
 

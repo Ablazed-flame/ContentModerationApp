@@ -1,4 +1,6 @@
-﻿using ContentModerationApp.Models;
+﻿using ContentModerationApp.DTOs;
+using ContentModerationApp.Models;
+using System.Text;
 
 namespace ContentModerationApp.Services
 {
@@ -22,18 +24,27 @@ namespace ContentModerationApp.Services
         {
             var textAnalysisResult = await _azureContentSafetyService.AnalyzeText(textItem.Text);
 
+            var reasons = new StringBuilder();
+            bool flag = false;
+  
+            foreach (var severity in textAnalysisResult.SeverityScores)
+            {
+                if (severity.Value > 0)
+                {
+                    reasons.Append($"Text flagged for {severity.Key} (Severity: {severity.Value}).");
+                    flag = true; 
+                }
+            }
             string summary = "";
-
-            if(textAnalysisResult.IsFlagged)
+            if (flag==true)
             {
                 summary = await _cohereApiService.AnalyzeTextAsync(textItem.Text);
             }
-
             return new ModerationResult
             {
-                IsFlagged = textAnalysisResult.IsFlagged,
-                FlagReasons = textAnalysisResult.Reasons,
-                ModerationSummary = textAnalysisResult.IsFlagged?summary:"Clean"
+                IsFlagged = flag,
+                FlagReasons = reasons.ToString(),
+                ModerationSummary = flag?summary:"Clean"
             };
 
         }
@@ -41,16 +52,27 @@ namespace ContentModerationApp.Services
         {
             string imageFullPath = Path.Combine(_envvironment.WebRootPath, imageItem.ImagePath.TrimStart('/'));
             var imageAnalysisResult = await _azureContentSafetyService.AnalyzeImage(imageFullPath);
+            var reasons = new StringBuilder();
+            bool flag = false;
+
+            foreach (var severity in imageAnalysisResult.SeverityScores)
+            {
+                if (severity.Value > 0)
+                {
+                    reasons.Append($"Image flagged for {severity.Key} (Severity: {severity.Value}).");
+                    flag = true;
+                }
+            }
             string summary = "";
-            if(imageAnalysisResult.IsFlagged)
+            if(flag)
             {
                 summary = await _cohereApiService.AnalyzeImageAsync(imageFullPath);
             }
             return new ModerationResult
             {
-                IsFlagged = imageAnalysisResult.IsFlagged,
-                FlagReasons = imageAnalysisResult.Reasons,
-                ModerationSummary = imageAnalysisResult.IsFlagged ? summary : "Clean"
+                IsFlagged = flag,
+                FlagReasons = reasons.ToString().Trim(),
+                ModerationSummary = flag ? summary : "Clean"
             };
         }
     }

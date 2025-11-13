@@ -63,18 +63,14 @@ public class AdminController : Controller
         if (submission == null) return NotFound();
 
         // Only override if admin selected a new override flag
-        if (model.AdminOverrideFlag.HasValue && model.AdminOverrideFlag != submission.IsFlagged)
-        {
+       
             submission.AdminOverrideFlag = model.AdminOverrideFlag;
-            submission.IsFlagged = model.AdminOverrideFlag.Value;
             submission.AdminOverrideNote = model.AdminOverrideNote;
             submission.AdminOverriddenAt = DateTime.UtcNow;
-        }
-        else
-        {
+ 
             // Save note even if flag wasn't changed
             submission.AdminOverrideNote = model.AdminOverrideNote;
-        }
+        
 
         _context.ContentSubmissions.Update(submission);
         await _context.SaveChangesAsync();

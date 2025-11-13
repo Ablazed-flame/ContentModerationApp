@@ -1,8 +1,9 @@
-﻿namespace ContentModerationApp.DTOs
+﻿using Azure.AI.ContentSafety;
+
+namespace ContentModerationApp.DTOs
 {
     public class ImageAnalysisResult
     {
-        public bool IsFlagged { get; set; }
-        public string Reasons { get; set; } = string.Empty;
+        public Dictionary<ImageCategory, int> SeverityScores { get; set; } = new();
     }
 }

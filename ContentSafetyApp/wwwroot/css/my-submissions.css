@@ -1,0 +1,64 @@
+﻿
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #4361ee, #3a0ca3);
+}
+
+.card {
+    border: none;
+    overflow: hidden;
+}
+
+.table th {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    border-bottom-width: 1px;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+}
+
+.text-preview {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.moderation-summary {
+    max-width: 250px;
+}
+
+.empty-state {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.badge {
+    padding: 0.35em 0.65em;
+    font-weight: 500;
+}
+
+.img-thumbnail {
+    transition: transform 0.2s;
+}
+
+    .img-thumbnail:hover {
+        transform: scale(1.05);
+        cursor: zoom-in;
+    }
+
+.view-details {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+}
+
+

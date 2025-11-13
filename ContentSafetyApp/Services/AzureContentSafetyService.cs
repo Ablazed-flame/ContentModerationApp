@@ -25,12 +25,13 @@ namespace ContentModerationApp.Services
 
             foreach (var category in textResponse.Value.CategoriesAnalysis)
             {
-                if (category.Severity > 0)
+                if (category.Severity.HasValue)
                 {
-                    result.Reasons += $"Text flagged for {category.Category} (Severity: {category.Severity}). ";
-                    result.IsFlagged = true;
+
+                    result.SeverityScores[category.Category] = category.Severity.Value;
                 }
-            }
+             }
+
             return result;
         }
 
@@ -50,10 +51,9 @@ namespace ContentModerationApp.Services
 
             foreach (var category in imageResponse.Value.CategoriesAnalysis)
             {
-                if (category.Severity > 0)
+                if (category.Severity.HasValue)
                 {
-                    result.Reasons += $"Image flagged for {category.Category} (Severity: {category.Severity}). ";
-                    result.IsFlagged = true;
+                    result.SeverityScores[category.Category] = category.Severity.Value;
                 }
             }
             return result;

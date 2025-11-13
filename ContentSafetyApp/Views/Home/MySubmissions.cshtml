@@ -48,21 +48,26 @@
                             {
                                 <tr>
                                     <td class="ps-4">
-                                        <div class="fw-semibold">@item.SubmittedAt.ToLocalTime().ToString("g")</div>
-                                        
+                                        <a asp-controller="Home" asp-action="Result" asp-route-id="@item.Id" class="text-decoration-none text-dark d-block">
+                                            <div class="fw-semibold humanize">@item.SubmittedAt.ToString("O")</div>
+                                        </a>
                                     </td>
+
                                     <td>
-                                        <div class="text-preview">
-                                            @if (!string.IsNullOrEmpty(item.TextContent))
-                                            {
-                                                @(item.TextContent.Length > 50 ? item.TextContent.Substring(0, 50) + "..." : item.TextContent)
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted">No text content</span>
-                                            }
-                                        </div>
+                                        <a asp-controller="Home" asp-action="Result" asp-route-id="@item.Id" class="text-decoration-none text-body d-block">
+                                            <div class="text-preview">
+                                                @if (!string.IsNullOrEmpty(item.TextContent))
+                                                {
+                                                    @(item.TextContent.Length > 50 ? item.TextContent.Substring(0, 50) + "..." : item.TextContent)
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No text content</span>
+                                                }
+                                            </div>
+                                        </a>
                                     </td>
+
                                     <td>
                                         @if (!string.IsNullOrEmpty(item.ImagePath))
                                         {
@@ -75,36 +80,39 @@
                                             <span class="badge bg-secondary">No image</span>
                                         }
                                     </td>
+
                                     <td>
-                                        @if (item.IsFlagged)
-                                        {
-                                            <span class="badge bg-danger rounded-pill">
-                                                <i class="fas fa-flag me-1"></i>Flagged
+                                        <a asp-controller="Home" asp-action="Result" asp-route-id="@item.Id" class="text-decoration-none d-block">
+                                            @{
+                                                var finalFlag = item.AdminOverrideFlag.HasValue ? item.AdminOverrideFlag.Value : item.IsFlagged;
+                                                var statusColor = finalFlag ? "danger" : "success";
+                                                var statusIcon = finalFlag ? "fa-flag" : "fa-check";
+                                                var statusText = finalFlag ? "Flagged" : "Clean";
+                                                var overrideBadge = item.AdminOverrideFlag.HasValue ? " (Admin)" : "";
+                                            }
+                                            <span class="badge bg-@statusColor rounded-pill">
+                                                <i class="fas @statusIcon me-1"></i>@statusText@overrideBadge
                                             </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-success rounded-pill">
-                                                <i class="fas fa-check me-1"></i>Clean
-                                            </span>
-                                        }
+                                        </a>
                                     </td>
+
                                     <td>
-                                        <div class="moderation-summary">
-                                            @if (!string.IsNullOrEmpty(item.ModerationSummary))
-                                            {
-                                                <span class="d-inline-block text-truncate" style="max-width: 200px;"
-                                                      data-bs-toggle="tooltip" data-bs-placement="top" title="@item.ModerationSummary">
-                                                    @item.ModerationSummary
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted">No summary</span>
-                                            }
-                                        </div>
+                                        <a asp-controller="Home" asp-action="Result" asp-route-id="@item.Id" class="text-decoration-none text-muted d-block">
+                                            <div class="moderation-summary">
+                                                @if (!string.IsNullOrEmpty(item.ModerationSummary))
+                                                {
+                                                    <span class="d-inline-block text-truncate" style="max-width: 200px;"
+                                                          data-bs-toggle="tooltip" data-bs-placement="top" title="@item.ModerationSummary">
+                                                        @item.ModerationSummary
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span>No summary</span>
+                                                }
+                                            </div>
+                                        </a>
                                     </td>
-      
                                 </tr>
                             }
                         </tbody>
@@ -128,94 +136,11 @@
 
 @section Styles {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" />
-    <style>
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #4361ee, #3a0ca3);
-        }
-
-        .card {
-            border: none;
-            overflow: hidden;
-        }
-
-        .table th {
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            color: #6c757d;
-            border-bottom-width: 1px;
-        }
-
-        .table td {
-            vertical-align: middle;
-            padding: 1rem 0.75rem;
-        }
-
-        .text-preview {
-            max-width: 200px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .moderation-summary {
-            max-width: 250px;
-        }
-
-        .empty-state {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .badge {
-            padding: 0.35em 0.65em;
-            font-weight: 500;
-        }
-
-        .img-thumbnail {
-            transition: transform 0.2s;
-        }
-
-            .img-thumbnail:hover {
-                transform: scale(1.05);
-                cursor: zoom-in;
-            }
-
-        .view-details {
-            width: 32px;
-            height: 32px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50% !important;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/my-submissions.css" />
 }
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/HumanizeDuration.js/1.2.2/humanize-duration.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            // Initialize tooltips
-            $('[data-bs-toggle="tooltip"]').tooltip();
-
-            // Format dates with humanize
-            $('.humanize').each(function() {
-                const date = new Date($(this).text());
-                $(this).text(humanizeDuration(Date.now() - date, {
-                    round: true,
-                    largest: 1
-                }) + ' ago');
-            });
-
-            // View details button handler
-            $('.view-details').click(function() {
-                const submissionId = $(this).data('id');
-                // Implement your detail view logic here
-                console.log('View details for submission:', submissionId);
-            });
-        });
-    </script>
+    <script src="~/js/my-submissions.js"></script>
 }

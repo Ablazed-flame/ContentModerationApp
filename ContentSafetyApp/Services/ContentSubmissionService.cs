@@ -2,6 +2,7 @@
 using ContentModerationApp.Models;
 using ContentModerationApp.ViewModels;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.EntityFrameworkCore;
 
 namespace ContentModerationApp.Services
 {
@@ -20,12 +21,12 @@ namespace ContentModerationApp.Services
             _environment = environment;
         }
 
-        public async Task<ContentSubmission> CreateAndModerateSubmissionAsync(ContentSubmissionViewModel model,string UserId)
+        public async Task<ContentSubmission> CreateAndModerateSubmissionAsync(ContentSubmissionViewModel model, string UserId)
         {
             string imagePath = null;
             if (model.ImageFile != null)
-            { 
-               imagePath = await SaveImage(model.ImageFile);
+            {
+                imagePath = await SaveImage(model.ImageFile);
             }
 
             var submission = new ContentSubmission
@@ -35,44 +36,133 @@ namespace ContentModerationApp.Services
                 Items = new List<ContentItem>()
             };
 
-            if(!string.IsNullOrEmpty(model.TextContent))
+            TextContentItem textItem = null;
+            ImageContentItem imageItem = null;
+            Task<ModerationResult> textTask = null;
+            Task<ModerationResult> imageTask = null;
+            if (!string.IsNullOrEmpty(model.TextContent))
             {
-                var textItem = new TextContentItem
+                textItem = new TextContentItem
                 {
                     Text = model.TextContent,
                 };
-                var textResult = await _contentModerationService.AnalyzeTextAsync(textItem);
-                textItem.ModerationResult = textResult;
+                textTask = _contentModerationService.AnalyzeTextAsync(textItem);
+
                 submission.Items.Add(textItem);
             }
             if (!string.IsNullOrEmpty(imagePath))
             {
-                var imageItem = new ImageContentItem
+                imageItem = new ImageContentItem
                 {
                     ImagePath = imagePath,
                 };
-                var imageResult = await _contentModerationService.AnalyzeImageAsync(imageItem);
-                imageItem.ModerationResult = imageResult;
+                imageTask = _contentModerationService.AnalyzeImageAsync(imageItem);
+
                 submission.Items.Add(imageItem);
             }
+            var tasksToRun = new List<Task>();
 
-            //var textResult = await _contentModerationService.AnalyzeTextAsync(textItem);
-            //textItem.ModerationResult = textResult;
-            foreach(var item in submission.Items)
+            if (textTask != null)
             {
-                if(item.ModerationResult != null && item.ModerationResult.IsFlagged)
-                {
-                    submission.IsFlagged = true;
-                    break;
-                }
+                tasksToRun.Add(textTask);
             }
-            _context.ContentSubmissions.Add(submission);
-            await _context.SaveChangesAsync();
+            if (imageTask != null)
+            {
+                tasksToRun.Add(imageTask);
+            }
+            try
+            {
+                await Task.WhenAll(tasksToRun);
+                if (textTask != null)
+                {
+                    textItem.ModerationResult = textTask.Result;
+                }
+                if (imageTask != null)
+                {
+                    imageItem.ModerationResult = imageTask.Result;
+                }
+
+                foreach (var item in submission.Items)
+                {
+                    if (item.ModerationResult != null && item.ModerationResult.IsFlagged)
+                    {
+                        submission.IsFlagged = true;
+                        break;
+                    }
+                }
+                _context.ContentSubmissions.Add(submission);
+                await _context.SaveChangesAsync();
+
+                return submission;
+            }
+            catch (Exception) 
+            {
+
+                if (!string.IsNullOrEmpty(imagePath))
+                {
+                    var fullPath = Path.Combine(_environment.WebRootPath, imagePath.TrimStart('/'));
+                    if (File.Exists(fullPath))
+                    {
+                        File.Delete(fullPath);
+                    }
+                }
+                throw;
+            }
+        }
+
+        public async Task<ContentSubmission> GetSubmissionByIdAsync(int id, string userId, bool isAdmin)
+        {
+            var submission = await _context.ContentSubmissions
+                .Include(s => s.User)
+                .Include(s => s.Items)
+                    .ThenInclude(item => item.ModerationResult)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (submission == null)
+            {
+                return null; // Controller will handle NotFound
+            }
+
+            // This is business logic: check if the user is allowed to see this.
+            if (submission.UserId != userId && !isAdmin)
+            {
+                // Throw an exception that the controller can catch as "Forbid"
+                throw new UnauthorizedAccessException("User is not authorized to view this submission.");
+            }
 
             return submission;
         }
 
+        public async Task<IEnumerable<SubmissionSummaryViewModel>> GetSubmissionsForUserAsync(string userId)
+        {
+            var mySubmissions = await _context.ContentSubmissions
+                .Include(s => s.Items)
+                    .ThenInclude(i => i.ModerationResult)
+                .Where(s => s.UserId == userId)
+                .OrderByDescending(s => s.SubmittedAt)
+                .ToListAsync();
 
+            // Move the projection logic here
+            var vm = mySubmissions.Select(s => new SubmissionSummaryViewModel
+            {
+                Id = s.Id,
+                SubmittedAt = s.SubmittedAt,
+
+                // --- FIX 1: Use the final, overridden status ---
+                IsFlagged = s.AdminOverrideFlag.HasValue ? s.AdminOverrideFlag.Value : s.IsFlagged,
+
+                // --- FIX 2: Correct property names ---
+                TextContent = s.Items.OfType<TextContentItem>().FirstOrDefault()?.Text,
+                ImagePath = s.Items.OfType<ImageContentItem>().FirstOrDefault()?.ImagePath,
+
+                // --- FIX 3: Combine all summaries ---
+                ModerationSummary = string.Join("; ", s.Items
+                    .Select(i => i.ModerationResult?.ModerationSummary)
+                    .Where(ms => !string.IsNullOrEmpty(ms)))
+            });
+
+            return vm;
+        }
         private async Task<string> SaveImage(IFormFile image)
         {
             string imagePath = null;

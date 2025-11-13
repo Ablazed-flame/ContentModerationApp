@@ -45,37 +45,51 @@ namespace ContentModerationApp.Controllers
 
         [Authorize]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Submit(ContentSubmissionViewModel model)
         {
 
             if (!ModelState.IsValid) 
                 return View(model);
 
+
             var submission = await _contentSubmissionService.CreateAndModerateSubmissionAsync(model, _userManager.GetUserId(User));
-        
-            return View("Result", submission);
+
+            return RedirectToAction("Result", new { id = submission.Id });
         }
 
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Result(int id)
+        {
+            try
+            {
+                var userId = _userManager.GetUserId(User);
+                var isAdmin = User.IsInRole("Admin");
+
+                // --- FIX 3: Delegate to service ---
+                var submission = await _contentSubmissionService.GetSubmissionByIdAsync(id, userId, isAdmin);
+
+                if (submission == null)
+                {
+                    return NotFound();
+                }
+
+                return View(submission);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid(); // Or AccessDenied
+            }
+        }
         [Authorize]
         public async Task<IActionResult> MySubmissions()
         {
             var userId = _userManager.GetUserId(User);
-            var mySubmissions = await _context.ContentSubmissions
-                .Include(s => s.Items)
-                .ThenInclude(i => i.ModerationResult)
-                .Where(s => s.UserId == userId)
-                .OrderByDescending(s => s.SubmittedAt)
-                .ToListAsync();
 
-            var vm = mySubmissions.Select(s=> new SubmissionSummaryViewModel
-            {
-                Id = s.Id,
-                SubmittedAt = s.SubmittedAt,
-                IsFlagged = s.IsFlagged,
-                TextContent = s.Items.OfType<TextContentItem>().FirstOrDefault()?.Text,
-                ImagePath = s.Items.OfType<ImageContentItem>().FirstOrDefault()?.ImagePath,
-                ModerationSummary = string.Join("; ", s.Items.Select(i => i.ModerationResult?.ModerationSummary).Where(ms => !string.IsNullOrEmpty(ms)))
-            });
+            // --- FIX 4: Delegate to service ---
+            var vm = await _contentSubmissionService.GetSubmissionsForUserAsync(userId);
+
             return View(vm);
         }
 
